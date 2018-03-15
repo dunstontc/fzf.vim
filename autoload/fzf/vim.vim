@@ -37,7 +37,7 @@ let s:bin = {
 let s:TYPE = {'dict': type({}), 'funcref': type(function('call')), 'string': type(''), 'list': type([])}
 if s:is_win
   if has('nvim')
-    let s:bin.preview = split(system('for %A in ("'.s:bin.preview.'") do echo %~sA'), "\n")[1]
+    let s:bin.preview = split(system('for %A in ("'.s:bin.preview.'") do @echo %~sA'), "\n")[0]
   else
     let s:bin.preview = fnamemodify(s:bin.preview, ':8')
   endif
@@ -97,7 +97,7 @@ function! fzf#vim#with_preview(...)
     call remove(args, 0)
   endif
 
-  let preview = ['--preview-window', window, '--preview', s:bin.preview.' '.(window =~ 'up\|down' ? '-v' : '').' {}']
+  let preview = ['--preview-window', window, '--preview', (s:is_win ? s:bin.preview : fzf#shellescape(s:bin.preview)).' {}']
 
   if len(args)
     call extend(preview, ['--bind', join(map(args, 'v:val.":toggle-preview"'), ',')])
@@ -113,11 +113,6 @@ function! s:remove_layout(opts)
     endif
   endfor
   return a:opts
-endfunction
-
-" Deprecated: use fzf#wrap instead
-function! fzf#vim#wrap(opts)
-  return fzf#wrap(a:opts)
 endfunction
 
 function! s:wrap(name, opts, bang)
@@ -844,7 +839,7 @@ function! fzf#vim#tags(query, ...)
   let opts = v2_limit < 0 ? '--algo=v1 ' : ''
 
   return s:fzf('tags', {
-  \ 'source':  fzf#shellescape(s:bin.tags).' '.join(map(tagfiles, 'fzf#shellescape(fnamemodify(v:val, ":p"))')),
+  \ 'source':  'perl '.fzf#shellescape(s:bin.tags).' '.join(map(tagfiles, 'fzf#shellescape(fnamemodify(v:val, ":p"))')),
   \ 'sink*':   s:function('s:tags_sink'),
   \ 'options': opts.'--nth 1..2 -m --tiebreak=begin --prompt "Tags> "'.s:q(a:query)}, a:000)
 endfunction
@@ -983,7 +978,7 @@ function! fzf#vim#helptags(...)
   if !executable('grep') || !executable('perl')
     return s:warn('Helptags command requires grep and perl')
   endif
-  let sorted = sort(split(globpath(&runtimepath, 'doc/tags'), '\n'))
+  let sorted = sort(split(globpath(&runtimepath, 'doc/tags', 1), '\n'))
   let tags = exists('*uniq') ? uniq(sorted) : fzf#vim#_uniq(sorted)
 
   if exists('s:helptags_script')

@@ -34,8 +34,15 @@ note that Windows support is experimental at the moment.
 Installation
 ------------
 
-Use [vim-plug](https://github.com/junegunn/vim-plug) or any Vim plugin
-manager of your choice.
+fzf.vim depends on the basic Vim plugin of [the main fzf
+repository][fzf-main], which means you need to **set up both "fzf" and
+"fzf.vim" on Vim**. To learn more about fzf/Vim integration, see
+[README-VIM][README-VIM].
+
+[fzf-main]: https://github.com/junegunn/fzf
+[README-VIM]: https://github.com/junegunn/fzf/blob/master/README-VIM.md
+
+### Using [vim-plug](https://github.com/junegunn/vim-plug)
 
 If you already installed fzf using [Homebrew](https://brew.sh/), the following
 should suffice:
@@ -169,7 +176,9 @@ You can use autoload functions to define your own commands.
 " Command for git grep
 " - fzf#vim#grep(command, with_column, [options], [fullscreen])
 command! -bang -nargs=* GGrep
-  \ call fzf#vim#grep('git grep --line-number '.shellescape(<q-args>), 0, <bang>0)
+  \ call fzf#vim#grep(
+  \   'git grep --line-number '.shellescape(<q-args>), 0,
+  \   { 'dir': systemlist('git rev-parse --show-toplevel')[0] }, <bang>0)
 
 " Override Colors command. You can safely do this in your .vimrc as fzf.vim
 " will not override existing commands.
